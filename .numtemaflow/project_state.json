@@ -1,0 +1,130 @@
+{
+  "project_name": "numtema-private-knowledge-mcp",
+  "project_type": "python-project",
+  "stack": [
+    "python",
+    "docker",
+    "docker-compose"
+  ],
+  "frameworks": [],
+  "package_manager": "",
+  "current_goal": "Maintain and evolve Nümtema Private Knowledge MCP — MVP v0.1.0.",
+  "current_phase": "completed",
+  "status": "completed",
+  "main_files": [
+    "README.md",
+    "pyproject.toml",
+    "Dockerfile",
+    "docker-compose.yml",
+    "app",
+    "tests"
+  ],
+  "agent_targets": [
+    "generic"
+  ],
+  "recommended_checks": [
+    "python -m pytest",
+    "python -m compileall ."
+  ],
+  "active_tasks": [],
+  "completed_tasks": [
+    {
+      "id": "MT-001",
+      "title": "Initialiser le suivi projet",
+      "status": "done"
+    }
+  ],
+  "blocked_tasks": [],
+  "risks": [
+    "Latest verification did not pass"
+  ],
+  "decisions": [],
+  "next_actions": [
+    "Run verification and finalize handoff"
+  ],
+  "has_git": false,
+  "last_scan": {
+    "project_name": "numtema-private-knowledge-mcp",
+    "project_type": "python-project",
+    "stack": [
+      "python",
+      "docker",
+      "docker-compose"
+    ],
+    "frameworks": [],
+    "package_manager": "",
+    "agent_targets": [
+      "generic"
+    ],
+    "main_files": [
+      "README.md",
+      "pyproject.toml",
+      "Dockerfile",
+      "docker-compose.yml",
+      "app",
+      "tests"
+    ],
+    "recommended_checks": [
+      "python -m pytest",
+      "python -m compileall ."
+    ],
+    "has_git": false,
+    "inferred_goal": "Maintain and evolve Nümtema Private Knowledge MCP — MVP v0.1.0."
+  },
+  "last_updated": "2026-07-13T16:46:20+00:00",
+  "recent_updates": [],
+  "recent_notes": [],
+  "last_memory_event": {},
+  "current_task": "",
+  "last_task_event": {
+    "event": "MT-001 -> done",
+    "task": "",
+    "updated_at": "2026-07-13T15:34:32+00:00"
+  },
+  "last_verification": {
+    "status": "failed",
+    "updated_at": "2026-07-13T16:46:20+00:00",
+    "commands": [
+      "python -m pytest",
+      "python -m compileall ."
+    ],
+    "results": [
+      {
+        "command": "python -m pytest",
+        "status": "failed",
+        "returncode": 127,
+        "timed_out": false
+      },
+      {
+        "command": "python -m compileall .",
+        "status": "failed",
+        "returncode": 127,
+        "timed_out": false
+      }
+    ]
+  },
+  "verification_history": [
+    {
+      "status": "failed",
+      "updated_at": "2026-07-13T16:46:20+00:00",
+      "commands": [
+        "python -m pytest",
+        "python -m compileall ."
+      ],
+      "results": [
+        {
+          "command": "python -m pytest",
+          "status": "failed",
+          "returncode": 127,
+          "timed_out": false
+        },
+        {
+          "command": "python -m compileall .",
+          "status": "failed",
+          "returncode": 127,
+          "timed_out": false
+        }
+      ]
+    }
+  ]
+}

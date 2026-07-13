@@ -1,0 +1,15 @@
+{
+  "goal": "Maintain and evolve Nümtema Private Knowledge MCP — MVP v0.1.0.",
+  "current": "Verification failed",
+  "evidence": [
+    "README.md",
+    "pyproject.toml",
+    "Dockerfile",
+    "docker-compose.yml",
+    "app",
+    "tests"
+  ],
+  "risk": "",
+  "next": "Run verification and finalize handoff",
+  "updated_at": "2026-07-13T16:46:20+00:00"
+}

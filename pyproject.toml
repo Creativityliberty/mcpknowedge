@@ -1,0 +1,39 @@
+[project]
+name = "numtema-private-knowledge-mcp"
+version = "0.1.0"
+description = "Local-first private document knowledge base with Qdrant, Ollama embeddings and MCP."
+readme = "README.md"
+requires-python = ">=3.11"
+dependencies = [
+  "fastapi>=0.115,<1",
+  "uvicorn[standard]>=0.34,<1",
+  "mcp[cli]>=1.10,<2",
+  "qdrant-client>=1.14,<2",
+  "httpx>=0.28,<1",
+  "python-multipart>=0.0.20,<1",
+  "pydantic-settings>=2.9,<3",
+  "pypdf>=5.6,<6",
+  "python-docx>=1.1,<2",
+  "beautifulsoup4>=4.13,<5",
+]
+
+[project.optional-dependencies]
+dev = [
+  "pytest>=8.3,<9",
+  "ruff>=0.11,<1",
+]
+
+[tool.pytest.ini_options]
+pythonpath = ["."]
+testpaths = ["tests"]
+
+[tool.ruff]
+line-length = 100
+target-version = "py311"
+
+[tool.setuptools.packages.find]
+include = ["app*"]
+exclude = ["data*", "tests*"]
+
+[tool.setuptools.package-data]
+app = ["static/*"]

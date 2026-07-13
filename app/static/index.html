@@ -1,0 +1,845 @@
+<!doctype html>
+<html lang="fr">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Nümtema Private Knowledge MCP</title>
+  <style>
+    :root {
+      color-scheme: dark;
+      font-family: Inter, ui-sans-serif, system-ui, sans-serif;
+      --sidebar-width: 260px;
+      --accent-color: #d6a7ff;
+      --bg-dark: #0b0d10;
+      --bg-card: #13161b;
+      --border-color: #262b33;
+      --text-main: #f6f7f9;
+      --text-muted: #9ba2ad;
+      --transition-speed: 0.3s;
+      --transition-curve: cubic-bezier(0.4, 0, 0.2, 1);
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      min-height: 100vh;
+      background: var(--bg-dark);
+      color: var(--text-main);
+      overflow-x: hidden;
+    }
+    
+    /* App Layout */
+    .app-container {
+      display: flex;
+      min-height: 100vh;
+      width: 100%;
+    }
+    
+    /* Sidebar styling */
+    .sidebar {
+      width: var(--sidebar-width);
+      background: var(--bg-card);
+      border-right: 1px solid var(--border-color);
+      display: flex;
+      flex-direction: column;
+      position: fixed;
+      top: 0;
+      bottom: 0;
+      left: 0;
+      z-index: 100;
+      transition: width var(--transition-speed) var(--transition-curve);
+    }
+    
+    .sidebar.collapsed {
+      --sidebar-width: 80px;
+    }
+    
+    .sidebar-header {
+      height: 72px;
+      display: flex;
+      align-items: center;
+      padding: 0 24px;
+      border-bottom: 1px solid var(--border-color);
+      overflow: hidden;
+    }
+    
+    .logo {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      font-weight: 800;
+      letter-spacing: .05em;
+      color: var(--text-main);
+    }
+    
+    .logo-icon {
+      color: var(--accent-color);
+      flex-shrink: 0;
+    }
+    
+    .logo-text {
+      font-size: 1.1rem;
+      transition: opacity var(--transition-speed) var(--transition-curve), width var(--transition-speed) var(--transition-curve);
+      white-space: nowrap;
+    }
+    
+    .sidebar.collapsed .logo-text {
+      opacity: 0;
+      width: 0;
+      pointer-events: none;
+    }
+    
+    /* Navigation */
+    .sidebar-nav {
+      flex: 1;
+      padding: 24px 12px;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+    
+    .nav-item {
+      display: flex;
+      align-items: center;
+      gap: 16px;
+      width: 100%;
+      background: transparent;
+      border: 0;
+      border-radius: 12px;
+      padding: 12px;
+      color: var(--text-muted);
+      cursor: pointer;
+      text-align: left;
+      font-weight: 600;
+      font-size: 0.95rem;
+      transition: all 0.2s ease;
+      position: relative;
+      overflow: hidden;
+    }
+    
+    .nav-item svg {
+      flex-shrink: 0;
+      transition: color 0.2s ease;
+    }
+    
+    .nav-item:hover {
+      color: var(--text-main);
+      background: rgba(255, 255, 255, 0.03);
+    }
+    
+    .nav-item.active {
+      color: var(--accent-color);
+      background: rgba(214, 167, 255, 0.08);
+    }
+    
+    .nav-item::before {
+      content: '';
+      position: absolute;
+      left: 0;
+      top: 15%;
+      height: 70%;
+      width: 3px;
+      background: var(--accent-color);
+      border-radius: 0 4px 4px 0;
+      transform: scaleX(0);
+      transform-origin: left;
+      transition: transform 0.2s ease;
+    }
+    
+    .nav-item.active::before {
+      transform: scaleX(1);
+    }
+    
+    .nav-label {
+      transition: opacity var(--transition-speed) var(--transition-curve), transform var(--transition-speed) var(--transition-curve);
+      white-space: nowrap;
+    }
+    
+    .sidebar.collapsed .nav-label {
+      opacity: 0;
+      transform: translateX(-10px);
+      pointer-events: none;
+      width: 0;
+    }
+    
+    /* Sidebar Footer */
+    .sidebar-footer {
+      border-top: 1px solid var(--border-color);
+      padding: 16px;
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+    
+    .sidebar-status {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      font-size: 0.8rem;
+      color: var(--text-muted);
+      overflow: hidden;
+      white-space: nowrap;
+    }
+    
+    .status-indicator {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background: #525a66;
+      flex-shrink: 0;
+      box-shadow: 0 0 8px rgba(82, 90, 102, 0.4);
+    }
+    
+    .status-indicator.ok {
+      background: #b6f2ce;
+      box-shadow: 0 0 10px rgba(182, 242, 206, 0.6);
+    }
+    
+    .status-indicator.degraded {
+      background: #ffd966;
+      box-shadow: 0 0 10px rgba(255, 217, 102, 0.6);
+    }
+    
+    .status-indicator.unreachable {
+      background: #ff9cab;
+      box-shadow: 0 0 10px rgba(255, 156, 171, 0.6);
+    }
+    
+    .status-text {
+      transition: opacity var(--transition-speed) var(--transition-curve);
+    }
+    
+    .sidebar.collapsed .status-text {
+      opacity: 0;
+      pointer-events: none;
+      width: 0;
+    }
+    
+    .toggle-btn {
+      width: 100%;
+      height: 38px;
+      background: rgba(255, 255, 255, 0.02);
+      border: 1px solid var(--border-color);
+      border-radius: 10px;
+      color: var(--text-muted);
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: all 0.2s ease;
+    }
+    
+    .toggle-btn:hover {
+      color: var(--text-main);
+      background: rgba(255, 255, 255, 0.05);
+      border-color: rgba(255, 255, 255, 0.15);
+    }
+    
+    .toggle-btn svg {
+      transition: transform var(--transition-speed) var(--transition-curve);
+    }
+    
+    .sidebar.collapsed .toggle-btn svg {
+      transform: rotate(180deg);
+    }
+    
+    /* Main Content panel */
+    .main-content {
+      flex: 1;
+      margin-left: var(--sidebar-width);
+      transition: margin-left var(--transition-speed) var(--transition-curve);
+      min-width: 0;
+    }
+    
+    .shell {
+      width: min(1100px, calc(100% - 48px));
+      margin: 0 auto;
+      padding: 40px 0 80px;
+    }
+    
+    header {
+      margin-bottom: 32px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    
+    h1 {
+      margin: 0;
+      font-size: 2.2rem;
+      font-weight: 800;
+      letter-spacing: -.03em;
+    }
+    
+    .eyebrow {
+      color: var(--accent-color);
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: .12em;
+      font-size: .75rem;
+      margin-bottom: 4px;
+    }
+    
+    .muted { color: var(--text-muted); }
+    
+    /* Cards and Utilities */
+    .card {
+      background: var(--bg-card);
+      border: 1px solid var(--border-color);
+      border-radius: 20px;
+      padding: 24px;
+      box-shadow: 0 12px 30px rgba(0, 0, 0, 0.15);
+    }
+    
+    .drop {
+      min-height: 210px;
+      border: 1.5px dashed #424a54;
+      display: grid;
+      place-items: center;
+      text-align: center;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      background: rgba(255, 255, 255, 0.01);
+      border-radius: 20px;
+    }
+    
+    .drop:hover, .drop.drag {
+      border-color: var(--accent-color);
+      background: rgba(214, 167, 255, 0.02);
+      transform: translateY(-1px);
+    }
+    
+    input[type=file] { display: none; }
+    
+    input[type=text], select {
+      width: 100%;
+      border: 1px solid var(--border-color);
+      background: #0d1014;
+      color: white;
+      border-radius: 12px;
+      padding: 13px 14px;
+      outline: none;
+      font-size: 0.95rem;
+      transition: border-color 0.2s ease;
+    }
+    
+    input[type=text]:focus, select:focus {
+      border-color: var(--accent-color);
+    }
+    
+    button {
+      border: 0;
+      border-radius: 12px;
+      padding: 13px 20px;
+      font-weight: 700;
+      cursor: pointer;
+      background: #f2e8ff;
+      color: #1b1024;
+      transition: all 0.2s ease;
+      font-size: 0.95rem;
+    }
+    
+    button:hover {
+      background: #e7cbff;
+      transform: translateY(-1px);
+    }
+    
+    button.ghost {
+      background: #222730;
+      color: #e7e9ed;
+    }
+    
+    button.ghost:hover {
+      background: #2c3340;
+    }
+    
+    button.danger {
+      background: #351a21;
+      color: #ffb8c3;
+    }
+    
+    button.danger:hover {
+      background: #4a202b;
+    }
+    
+    .row { display: flex; gap: 12px; align-items: center; }
+    .stack { display: grid; gap: 16px; }
+    
+    .docs, .hits { display: grid; gap: 12px; margin-top: 14px; }
+    .doc, .hit { border: 1px solid var(--border-color); background: #0f1216; border-radius: 16px; padding: 18px; transition: border-color 0.2s ease; }
+    .doc:hover, .hit:hover { border-color: rgba(255, 255, 255, 0.08); }
+    .doc h3, .hit h3 { margin: 0 0 8px; font-size: 1.05rem; font-weight: 700; }
+    .meta { color: #8e95a0; font-size: .82rem; overflow-wrap: anywhere; }
+    .snippet { color: #d1d5db; line-height: 1.6; white-space: pre-wrap; margin-top: 10px; font-size: 0.92rem; }
+    .score { color: #b6f2ce; font-family: ui-monospace, monospace; margin-left: 8px; font-size: 0.9rem; }
+    code { color: #e7cbff; overflow-wrap: anywhere; background: rgba(214, 167, 255, 0.05); padding: 8px 12px; border-radius: 8px; font-family: ui-monospace, monospace; border: 1px solid rgba(214, 167, 255, 0.1); display: block; line-height: 1.5; }
+    .notice { min-height: 24px; color: var(--text-muted); margin-top: -12px; margin-bottom: 24px; font-weight: 600; font-size: 0.95rem; }
+    
+    /* Navigation Tabs */
+    .tab-panel {
+      display: none;
+    }
+    
+    .tab-panel.active {
+      display: block;
+      animation: fadeIn 0.2s ease;
+    }
+    
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(5px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+    
+    @keyframes pulse {
+      0% { opacity: 0.6; }
+      50% { opacity: 1; }
+      100% { opacity: 0.6; }
+    }
+
+    /* Document Preview UI */
+    .doc-title {
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      user-select: none;
+      transition: color 0.2s ease;
+    }
+    .doc-title:hover {
+      color: var(--accent-color);
+    }
+    .doc-title svg {
+      transition: transform 0.2s ease;
+      color: var(--text-muted);
+    }
+    .doc-title.open svg {
+      transform: rotate(90deg);
+      color: var(--accent-color);
+    }
+    .preview-box {
+      margin-top: 14px;
+      padding: 16px;
+      background: #090b0e;
+      border: 1px solid var(--border-color);
+      border-radius: 12px;
+      max-height: 250px;
+      overflow-y: auto;
+      font-size: 0.85rem;
+      color: #cbd5e1;
+      white-space: pre-wrap;
+      font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+      line-height: 1.5;
+      animation: fadeIn 0.2s ease;
+    }
+    
+    /* Mobile Bottom Navigation */
+    .bottom-nav {
+      display: none;
+    }
+    
+    @media (max-width: 780px) {
+      .sidebar {
+        display: none;
+      }
+      .main-content {
+        margin-left: 0;
+      }
+      .shell {
+        width: calc(100% - 32px);
+        padding: 24px 0 100px;
+      }
+      header {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 16px;
+      }
+      .row {
+        flex-direction: column;
+        align-items: stretch;
+      }
+      #scope {
+        max-width: 100%;
+      }
+      
+      .bottom-nav {
+        display: flex;
+        position: fixed;
+        bottom: 0;
+        left: 0;
+        right: 0;
+        height: 64px;
+        background: var(--bg-card);
+        border-top: 1px solid var(--border-color);
+        z-index: 100;
+        justify-content: space-around;
+        align-items: center;
+        padding-bottom: env(safe-area-inset-bottom);
+      }
+      
+      .bottom-nav-item {
+        background: transparent;
+        border: 0;
+        color: var(--text-muted);
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        gap: 4px;
+        padding: 8px;
+        cursor: pointer;
+        font-size: 0.7rem;
+        font-weight: 700;
+      }
+      
+      .bottom-nav-item.active {
+        color: var(--accent-color);
+      }
+      
+      .mobile-header-status {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        font-size: 0.75rem;
+        background: rgba(255, 255, 255, 0.03);
+        padding: 6px 12px;
+        border-radius: 999px;
+        border: 1px solid var(--border-color);
+        margin-top: 8px;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="app-container">
+    <!-- Sidebar for Desktop -->
+    <aside class="sidebar" id="sidebar">
+      <div class="sidebar-header">
+        <div class="logo">
+          <svg class="logo-icon" viewBox="0 0 24 24" width="28" height="28" stroke="currentColor" stroke-width="2.5" fill="none" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M12 2a10 10 0 1 0 10 10H12V2z"></path>
+            <path d="M12 2a10 10 0 0 1 10 10h-10V2z" opacity="0.6"></path>
+          </svg>
+          <span class="logo-text">NÜMTEMA</span>
+        </div>
+      </div>
+      
+      <nav class="sidebar-nav">
+        <button class="nav-item active" data-tab="tab-library">
+          <svg viewBox="0 0 24 24" width="20" height="20" stroke="currentColor" stroke-width="2.2" fill="none" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"></path>
+          </svg>
+          <span class="nav-label">Bibliothèque</span>
+        </button>
+        <button class="nav-item" data-tab="tab-search">
+          <svg viewBox="0 0 24 24" width="20" height="20" stroke="currentColor" stroke-width="2.2" fill="none" stroke-linecap="round" stroke-linejoin="round">
+            <circle cx="11" cy="11" r="8"></circle>
+            <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+          </svg>
+          <span class="nav-label">Recherche</span>
+        </button>
+        <button class="nav-item" data-tab="tab-mcp">
+          <svg viewBox="0 0 24 24" width="20" height="20" stroke="currentColor" stroke-width="2.2" fill="none" stroke-linecap="round" stroke-linejoin="round">
+            <rect x="2" y="2" width="20" height="8" rx="2" ry="2"></rect>
+            <rect x="2" y="14" width="20" height="8" rx="2" ry="2"></rect>
+            <line x1="6" y1="6" x2="6.01" y2="6"></line>
+            <line x1="6" y1="18" x2="6.01" y2="18"></line>
+          </svg>
+          <span class="nav-label">Config MCP</span>
+        </button>
+      </nav>
+      
+      <div class="sidebar-footer">
+        <div class="sidebar-status">
+          <span class="status-indicator" id="status-dot"></span>
+          <span class="status-text" id="status-text">Vérification…</span>
+        </div>
+        <button class="toggle-btn" id="sidebar-toggle" aria-label="Replier la barre latérale">
+          <svg viewBox="0 0 24 24" width="18" height="18" stroke="currentColor" stroke-width="2.5" fill="none" stroke-linecap="round" stroke-linejoin="round">
+            <polyline points="15 18 9 12 15 6"></polyline>
+          </svg>
+        </button>
+      </div>
+    </aside>
+
+    <!-- Main Panel -->
+    <main class="main-content">
+      <div class="shell">
+        <header>
+          <div>
+            <div class="eyebrow">Local-first · Open source · MCP</div>
+            <h1 id="page-title">Bibliothèque</h1>
+            <!-- Mobile status only -->
+            <div class="mobile-header-status bottom-nav" id="mobile-health-container">
+              <span class="status-indicator" id="mobile-status-dot"></span>
+              <span id="mobile-status-text">Vérification…</span>
+            </div>
+          </div>
+        </header>
+
+        <!-- Global Notifications -->
+        <div class="notice" id="notice"></div>
+
+        <!-- Panel: Library -->
+        <div class="tab-panel active" id="tab-library">
+          <label class="card drop" id="dropzone">
+            <input id="file" type="file" accept=".pdf,.docx,.txt,.md,.html,.htm" />
+            <div>
+              <strong>Dépose un document ici</strong>
+              <p class="muted">PDF, DOCX, TXT, Markdown ou HTML · 50 Mo max</p>
+              <button type="button" onclick="document.getElementById('file').click()">Choisir un fichier</button>
+            </div>
+          </label>
+          <div class="card" style="margin-top: 24px;">
+            <div class="eyebrow">Documents indexés</div>
+            <div class="docs" id="documents"></div>
+          </div>
+        </div>
+
+        <!-- Panel: Search -->
+        <div class="tab-panel" id="tab-search">
+          <div class="card stack">
+            <div class="eyebrow">Recherche sémantique</div>
+            <div class="row">
+              <input id="query" type="text" placeholder="Que disent mes documents sur… ?" />
+              <select id="scope"><option value="">Toute la bibliothèque</option></select>
+              <button id="search">Rechercher</button>
+            </div>
+            <div class="hits" id="hits"></div>
+          </div>
+        </div>
+
+        <!-- Panel: MCP -->
+        <div class="tab-panel" id="tab-mcp">
+          <div class="card stack">
+            <div class="eyebrow">Accès MCP & API</div>
+            <div>
+              <div class="muted" style="margin-bottom:6px">URL du serveur MCP</div>
+              <code id="mcpUrl">http://localhost:8000/mcp</code>
+            </div>
+            <div>
+              <div class="muted" style="margin-bottom:6px">Catalogue des ressources</div>
+              <code>knowledge://catalog</code>
+            </div>
+            <div>
+              <div class="muted" style="margin-bottom:6px">Ressource par document</div>
+              <code>knowledge://documents/{document_id}</code>
+            </div>
+          </div>
+        </div>
+      </div>
+    </main>
+  </div>
+
+  <!-- Mobile Bottom Navigation -->
+  <nav class="bottom-nav">
+    <button class="bottom-nav-item active" data-tab="tab-library">
+      <svg viewBox="0 0 24 24" width="20" height="20" stroke="currentColor" stroke-width="2.2" fill="none" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"></path>
+      </svg>
+      <span>Docs</span>
+    </button>
+    <button class="bottom-nav-item" data-tab="tab-search">
+      <svg viewBox="0 0 24 24" width="20" height="20" stroke="currentColor" stroke-width="2.2" fill="none" stroke-linecap="round" stroke-linejoin="round">
+        <circle cx="11" cy="11" r="8"></circle>
+        <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+      </svg>
+      <span>Recherche</span>
+    </button>
+    <button class="bottom-nav-item" data-tab="tab-mcp">
+      <svg viewBox="0 0 24 24" width="20" height="20" stroke="currentColor" stroke-width="2.2" fill="none" stroke-linecap="round" stroke-linejoin="round">
+        <rect x="2" y="2" width="20" height="8" rx="2" ry="2"></rect>
+        <rect x="2" y="14" width="20" height="8" rx="2" ry="2"></rect>
+        <line x1="6" y1="6" x2="6.01" y2="6"></line>
+        <line x1="6" y1="18" x2="6.01" y2="18"></line>
+      </svg>
+      <span>MCP</span>
+    </button>
+  </nav>
+
+<script>
+const $ = (id) => document.getElementById(id);
+const notice = (text, bad = false) => { $('notice').textContent = text; $('notice').style.color = bad ? '#ff9cab' : '#b6f2ce'; };
+const esc = (value) => String(value).replace(/[&<>'"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;',"'":'&#39;','"':'&quot;'}[c]));
+
+// Tab labels for title updates
+const TAB_LABELS = {
+  'tab-library': 'Bibliothèque',
+  'tab-search': 'Recherche Sémantique',
+  'tab-mcp': 'Configuration MCP'
+};
+
+// Navigation Tab Management
+function setupNavigation() {
+  const navItems = document.querySelectorAll('.nav-item, .bottom-nav-item');
+  navItems.forEach(item => {
+    item.addEventListener('click', () => {
+      const tabId = item.getAttribute('data-tab');
+      
+      // Update sidebar active state
+      document.querySelectorAll('.nav-item').forEach(i => {
+        i.classList.toggle('active', i.getAttribute('data-tab') === tabId);
+      });
+      
+      // Update bottom nav active state (mobile)
+      document.querySelectorAll('.bottom-nav-item').forEach(i => {
+        i.classList.toggle('active', i.getAttribute('data-tab') === tabId);
+      });
+      
+      // Toggle active panel
+      document.querySelectorAll('.tab-panel').forEach(panel => {
+        panel.classList.toggle('active', panel.id === tabId);
+      });
+      
+      // Update page title
+      if (TAB_LABELS[tabId]) {
+        $('page-title').textContent = TAB_LABELS[tabId];
+      }
+    });
+  });
+}
+
+// Collapsible Sidebar Management
+function setupSidebarToggle() {
+  const sidebar = $('sidebar');
+  const toggleBtn = $('sidebar-toggle');
+  
+  // Load collapsed state from localStorage
+  const isCollapsed = localStorage.getItem('sidebar-collapsed') === 'true';
+  if (isCollapsed) {
+    sidebar.classList.add('collapsed');
+  }
+  
+  toggleBtn.addEventListener('click', () => {
+    const collapsed = sidebar.classList.toggle('collapsed');
+    localStorage.setItem('sidebar-collapsed', collapsed);
+  });
+}
+
+async function health() {
+  try {
+    const r = await fetch('/api/health'); const data = await r.json();
+    const isOk = data.status === 'ok';
+    const statusClass = isOk ? 'ok' : (data.qdrant === 'ok' || data.ollama === 'ok' ? 'degraded' : 'unreachable');
+    
+    // Update indicator dot
+    $('status-dot').className = `status-indicator ${statusClass}`;
+    $('mobile-status-dot').className = `status-indicator ${statusClass}`;
+    
+    // Update status text
+    const labelText = `Qdrant: ${data.qdrant} · Ollama: ${data.ollama}`;
+    $('status-text').textContent = labelText;
+    $('mobile-status-text').textContent = labelText;
+    $('mcpUrl').textContent = data.mcp_url;
+  } catch {
+    $('status-dot').className = 'status-indicator unreachable';
+    $('mobile-status-dot').className = 'status-indicator unreachable';
+    $('status-text').textContent = 'Service indisponible';
+    $('mobile-status-text').textContent = 'Service indisponible';
+  }
+}
+
+let pollInterval = null;
+
+async function togglePreview(docId, titleEl) {
+  const previewArea = $(`preview-${docId}`);
+  if (!previewArea) return;
+  
+  const isOpen = titleEl.classList.toggle('open');
+  if (isOpen) {
+    previewArea.style.display = 'block';
+    previewArea.innerHTML = '<div class="muted" style="animation:pulse 1s infinite;margin-top:10px">Chargement du contenu...</div>';
+    try {
+      const r = await fetch(`/api/documents/${docId}/text`);
+      const data = await r.json();
+      if (r.ok) {
+        previewArea.innerHTML = `<div class="preview-box">${esc(data.text || 'Document vide')}</div>`;
+      } else {
+        previewArea.innerHTML = `<div class="preview-box" style="color:#ff9cab">Erreur: ${esc(data.detail || 'Impossible de lire le document')}</div>`;
+      }
+    } catch {
+      previewArea.innerHTML = '<div class="preview-box" style="color:#ff9cab">Erreur de connexion.</div>';
+    }
+  } else {
+    previewArea.style.display = 'none';
+  }
+}
+
+async function loadDocuments() {
+  const r = await fetch('/api/documents'); const docs = await r.json();
+  $('scope').innerHTML = '<option value="">Toute la bibliothèque</option>' + docs.map(d => `<option value="${d.id}">${esc(d.title)}</option>`).join('');
+  $('documents').innerHTML = docs.length ? docs.map(d => {
+    let statusLabel = esc(d.status);
+    if (d.status === 'processing') {
+      statusLabel = `<span style="color:#d6a7ff;animation:pulse 1.5s infinite;font-weight:bold">En cours d'indexation...</span>`;
+    } else if (d.status === 'failed') {
+      statusLabel = `<span style="color:#ff9cab" title="${esc(d.error || 'Erreur inconnue')}">Échec</span>`;
+    }
+    return `
+    <article class="doc" id="doc-card-${d.id}">
+      <h3 class="doc-title" onclick="togglePreview('${d.id}', this)">
+        <span>${esc(d.title)}</span>
+        <svg viewBox="0 0 24 24" width="16" height="16" stroke="currentColor" stroke-width="2.5" fill="none" stroke-linecap="round" stroke-linejoin="round">
+          <polyline points="9 18 15 12 9 6"></polyline>
+        </svg>
+      </h3>
+      <div class="meta">${esc(d.filename)} · ${d.chunk_count} passages · ${statusLabel}</div>
+      <div class="meta">knowledge://documents/${d.id}</div>
+      <div class="row" style="margin-top:10px"><button class="danger" onclick="removeDoc('${d.id}')">Supprimer</button></div>
+      <div class="preview-area" id="preview-${d.id}" style="display:none"></div>
+    </article>`;
+  }).join('') : '<div class="muted">Aucun document pour le moment.</div>';
+
+  const hasProcessing = docs.some(d => d.status === 'processing');
+  if (hasProcessing) {
+    if (!pollInterval) {
+      pollInterval = setInterval(async () => {
+        await loadDocuments();
+        await health();
+      }, 5000);
+    }
+  } else {
+    if (pollInterval) {
+      clearInterval(pollInterval);
+      pollInterval = null;
+    }
+  }
+}
+
+async function upload(file) {
+  const form = new FormData(); form.append('file', file); notice(`Indexation de ${file.name} commencée…`);
+  const r = await fetch('/api/documents', {method:'POST', body: form}); const data = await r.json();
+  if (!r.ok) throw new Error(data.detail || 'Échec de l’indexation');
+  notice(`Document ${data.title} en cours d'indexation en arrière-plan.`); await loadDocuments(); await health();
+}
+
+async function removeDoc(id) {
+  if (!confirm('Supprimer ce document et ses vecteurs ?')) return;
+  const r = await fetch(`/api/documents/${id}`, {method:'DELETE'});
+  if (!r.ok) return notice('Suppression impossible.', true);
+  notice('Document supprimé.'); await loadDocuments();
+}
+
+async function search() {
+  const q = $('query').value.trim(); if (q.length < 2) return;
+  $('hits').innerHTML = '<div class="muted">Recherche…</div>';
+  const params = new URLSearchParams({q, limit:'8'}); if ($('scope').value) params.set('document_id', $('scope').value);
+  const r = await fetch('/api/search?' + params); const data = await r.json();
+  if (!r.ok) { $('hits').innerHTML = `<div class="muted">${esc(data.detail)}</div>`; return; }
+  $('hits').innerHTML = data.hits.length ? data.hits.map(h => `
+    <article class="hit"><h3>${esc(h.title)} <span class="score">${h.score.toFixed(3)}</span></h3>
+    <div class="meta">Passage ${h.chunk_index} · ${esc(h.filename)}</div><div class="snippet">${esc(h.text)}</div></article>`).join('') : '<div class="muted">Aucun passage pertinent.</div>';
+}
+
+// Initialise everything
+setupNavigation();
+setupSidebarToggle();
+$('file').addEventListener('change', e => e.target.files[0] && upload(e.target.files[0]).catch(err => notice(err.message, true)));
+$('search').addEventListener('click', search);
+$('query').addEventListener('keydown', e => e.key === 'Enter' && search());
+const dz = $('dropzone');
+['dragenter','dragover'].forEach(ev => dz.addEventListener(ev, e => {e.preventDefault(); dz.classList.add('drag');}));
+['dragleave','drop'].forEach(ev => dz.addEventListener(ev, e => {e.preventDefault(); dz.classList.remove('drag');}));
+dz.addEventListener('drop', e => e.dataTransfer.files[0] && upload(e.dataTransfer.files[0]).catch(err => notice(err.message, true)));
+health(); loadDocuments();
+</script>
+</body>
+</html>
