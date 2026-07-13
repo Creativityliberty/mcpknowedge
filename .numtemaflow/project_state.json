@@ -42,7 +42,7 @@
   "next_actions": [
     "Run verification and finalize handoff"
   ],
-  "has_git": false,
+  "has_git": true,
   "last_scan": {
     "project_name": "numtema-private-knowledge-mcp",
     "project_type": "python-project",
@@ -68,10 +68,10 @@
       "python -m pytest",
       "python -m compileall ."
     ],
-    "has_git": false,
+    "has_git": true,
     "inferred_goal": "Maintain and evolve Nümtema Private Knowledge MCP — MVP v0.1.0."
   },
-  "last_updated": "2026-07-13T16:46:20+00:00",
+  "last_updated": "2026-07-13T17:14:02+00:00",
   "recent_updates": [],
   "recent_notes": [],
   "last_memory_event": {},
@@ -126,5 +126,10 @@
         }
       ]
     }
-  ]
+  ],
+  "last_resume": {
+    "kind": "resume",
+    "output": "stdout",
+    "updated_at": "2026-07-13T17:14:02+00:00"
+  }
 }

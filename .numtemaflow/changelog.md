@@ -24,3 +24,8 @@
 ## 2026-07-13T16:46:20+00:00 — Verification run
 - failed: `python -m pytest`
 - failed: `python -m compileall .`
+
+## 2026-07-13T17:15:00+00:00 — Task lifecycle
+- MT-002 — Ingénierie Backend et Résilience -> done
+- MT-003 — Refonte UI (Glassmorphism & Preview) -> done
+- All backend resilience (Qdrant fallback, FastAPI BackgroundTasks) and UI/MCP changes (Stdio, Document Preview) completed and tested.
